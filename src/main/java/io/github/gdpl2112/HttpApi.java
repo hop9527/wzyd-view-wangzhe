@@ -189,9 +189,9 @@ public class HttpApi {
         map.put("userid", nullToEmpty(userId));
         map.put("openid", d.getOpenid());
         map.put("kohdimgender", String.valueOf(d.getDimGender()));
-        if (payload == Payload.FORM) {
-            // 旧版 kohsocialapp 服务使用该头部, 与新服务的 openid 并存
-            map.put("gameopenid", d.getOpenid());
+        // gameopenid 与 openid 不是同一个值: 前者绑定「账号+已选角色」, 选定角色后才出现
+        if (d.getGameOpenId() != null && !d.getGameOpenId().trim().isEmpty()) {
+            map.put("gameopenid", d.getGameOpenId().trim());
         }
 
         // ---- 每请求变化项 ----

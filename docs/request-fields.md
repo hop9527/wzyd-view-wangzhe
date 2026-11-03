@@ -56,12 +56,14 @@
 | 头部 | 配置键 | 默认值 |
 |---|---|---|
 | `gameid` / `cgameid` / `ccurrentgameid` | `gameId` | `20001` |
-| `gameareaid` | `gameAreaId` | `0` |
-| `gameroleid` | `gameRoleId` | `0` |
-| `gameserverid` | `gameServerId` | `0` |
-| `gameusersex` | `gameUserSex` | `0` |
+| `gameareaid` | `gameAreaId` | `1` |
+| `gameroleid` | `gameRoleId` | `0`（建议填当前登录角色 id） |
+| `gameserverid` | `gameServerId` | `0`（建议填当前登录角色区服 id） |
+| `gameusersex` | `gameUserSex` | `1` |
 
-> 未选定角色时四项均为 0，与抓包一致。角色维度接口（如英雄战绩）在调用点按实际值覆盖 `gameroleid` / `serverid` / `gameserverid`。
+> 真机行为按「是否已选定角色」区分（见第三节对比）：
+> 未选角色的 `/game/rolelist` 四项全为 `0`；选定角色后的请求携带**当前登录角色**的大区 / 角色 / 区服 / 性别。
+> 本项目调用的接口均属后者，因此默认按已选角色配置。
 
 ### 账号态
 
@@ -69,9 +71,9 @@
 |---|---|---|
 | `token` | `bind.json` | 抓包所得 token |
 | `userid` | `bind.json` | 抓包所得 userid |
-| `openid` | `device.json` | 32 位大写十六进制，**必须固定**；建议填写该 token 对应的真实 openid |
+| `openid` | `device.json` | 账号级 openid，32 位大写十六进制，**必须固定** |
 | `kohdimgender` | `device.json` | 营地资料性别，1=男 2=女 |
-| `gameopenid` | `device.json` | 仅旧版 `kohsocialapp` 服务下发，值同 `openid` |
+| `gameopenid` | `device.json` | 游戏侧 openid，**与 `openid` 不是同一个值**；选定角色后出现，留空则不下发 |
 
 ### 每请求变化项
 
@@ -84,10 +86,33 @@
 
 | 头部 | 处理 |
 |---|---|
-| `istrpcrequest` | `device.json` 的 `trpc`，默认 `true`（保持 JSON 接口现有可用行为）；设为 `false` 可完全对齐抓包 |
+| `istrpcrequest` | `device.json` 的 `trpc`，默认 `false`——两份真机抓包（`rolelist`、`isaccesstokenexpired`）均不含该头部 |
 | `encodeparam` | **离线无法复算**。由客户端安全 SDK 按请求体实时生成，默认留空即不下发。发送错误值比不发送更容易被判定为异常，仅在确定可复用时才填 |
 
-## 三、已修正的检测特征
+## 三、两次抓包对比
+
+两份抓包来自同一账号、同一设备，差异全部由「是否已选定角色」决定，可据此确认哪些字段是常量、哪些是上下文。
+
+| 头部 | `[91] /game/rolelist` | `[131] /sso/isaccesstokenexpired` | 结论 |
+|---|---|---|---|
+| `content-type` | `application/proto; charset=UTF-8` | `application/json; charset=UTF-8` | 按接口协议区分，不能统一 |
+| 请求体 | 10 字节 protobuf | 72 字节 JSON | 同上 |
+| `gameareaid` | `0` | `1` | 未选角色 / 已选角色的差异 |
+| `gameroleid` | `0` | `2974907601` | 同上 |
+| `gameserverid` | `0` | `1391` | 同上 |
+| `gameusersex` | `0` | `1` | 同上 |
+| `gameopenid` | **不存在** | `DDDDBB0D058EDD4EAC30A9CC46AE48DD` | 选定角色后才出现，且 ≠ `openid` |
+| `openid` | `0B557AA9D02F7159A2DBA984E0445760` | 同一值 | 账号级常量 |
+| `x-log-uid` | `98F70B3D-...` | 同一值 | 设备级常量 |
+| `crand` | `1793715726726` | `1793717329253` | 每请求变化 |
+| `traceparent` | `00-fb909df4...` | `00-03f193e8...` | 每请求变化 |
+| `encodeparam` | 152 字符 | 168 字符 | **每请求变化**，印证无法复用 |
+| `token` | `14OFXePbm...` | `-8bexmsd2...` | 两次抓包间已轮换 |
+| `istrpcrequest` | 不存在 | 不存在 | 真机从不携带 |
+
+关键结论：`gameopenid` 只在选定角色后出现，且与 `openid` 是两个不同的值——这是上一版实现判断错误的地方。
+
+## 四、已修正的检测特征
 
 | 问题 | 旧实现 | 现实现 |
 |---|---|---|
@@ -99,8 +124,11 @@
 | 缺少追踪头 | 无 `x-log-uid`、`traceparent` | 已补齐 |
 | content-type 错配 | proto 请求体下发 `application/x-protobuf` | `application/proto; charset=UTF-8` |
 | 跨域 Host 错配 | 统一写死 `Host: kohcamp.qq.com`，再对 `ssl.kohsocialapp.qq.com` 手工改写 | 不再下发 Host，由 HTTP 客户端按 URL 生成 |
+| `gameopenid` 判断错误（第二轮比对修正） | 仅旧版服务下发，且直接复用 `openid` 的值 | 独立配置项，与 `openid` 分离；选定角色后的请求全部下发 |
+| 角色上下文缺失（第二轮比对修正） | `gameareaid=1`、`gameusersex=0`、`gameroleid/gameserverid` 不存在 | 按已选角色场景配置 `areaid=1`、`usersex=1`，并补 `gameroleid`/`gameserverid` |
+| 多余标记头（第二轮比对修正） | 恒发 `istrpcrequest: true`，两份真机抓包均无此头 | 默认不下发，保留 `trpc` 开关 |
 
-## 四、使用与调整
+## 五、使用与调整
 
 1. 首次启动会自动生成 `data/device.json`，字段缺失时自动补齐并回写；
 2. 修改后调用 `GET /bind/reload` 即可免重启生效；
@@ -114,19 +142,20 @@
 | 字段 | 取值来源 |
 |---|---|
 | `openid` | 抓包中的 `openid` 头部。必须与该 token 所属账号一致 |
+| `gameOpenId` | 抓包中的 `gameopenid` 头部。与 `openid` 不同值，绑定「账号 + 已选角色」 |
 | `logUid` | 抓包中的 `x-log-uid` 头部。设备级 UUID，同一台手机固定 |
 | `cpuHardware` | 抓包中的 `cpuhardware`；或 `adb shell getprop ro.board.platform` |
 | `systemVersionName` | 抓包中的 `csystemversionname`；或 `adb shell getprop ro.build.version.release` |
 | `systemVersionCode` | 抓包中的 `csystemversioncode`；或 `adb shell getprop ro.build.version.sdk` |
 | `clientVersionName/Code` | 抓包中的 `cclientversionname` / `cclientversioncode` |
 | `tinkerId` | 留空自动推导为 `<clientVersionCode>_64_0` |
-| `gameAreaId/gameRoleId/gameServerId` | 未选定角色填 `0`；角色维度接口在调用点按实际值覆盖 |
+| `gameAreaId/gameRoleId/gameServerId/gameUserSex` | 抓包中已选角色后的 `gameareaid` / `gameroleid` / `gameserverid` / `gameusersex`；角色级接口在调用点按实际值覆盖 |
 | `dimGender` | 抓包中的 `kohdimgender`，1=男 2=女 |
 | `encodeParam` | 无法离线生成，留空即可 |
 
-> 没有抓包时，直接使用默认值（本仓库默认值取自真机 `POST /game/rolelist`）也能保持字段自洽；只有 `openid` 与账号相关，建议填真实值。
+> 没有抓包时，直接使用默认值（取自真机 `POST /sso/isaccesstokenexpired`，即已选角色的常态场景）也能保持字段自洽；只有 `openid` / `gameOpenId` 与账号相关，建议填真实值。
 
-## 五、能力边界
+## 六、能力边界
 
 对齐头部只能消除**静态特征**层面的差异。服务端风控还包括：
 

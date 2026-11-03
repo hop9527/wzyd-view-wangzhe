@@ -1,5 +1,6 @@
 {
 	"openid": "0B557AA9D02F7159A2DBA984E0445760",
+	"gameOpenId": "DDDDBB0D058EDD4EAC30A9CC46AE48DD",
 	"logUid": "98F70B3D-6AC6-431D-B17B-84AE30E5BD18",
 	"cpuHardware": "mt6833",
 	"system": "android",
@@ -12,11 +13,11 @@
 	"arm64": true,
 	"gzip": 1,
 	"gameId": "20001",
-	"gameAreaId": "0",
-	"gameRoleId": "0",
-	"gameServerId": "0",
-	"gameUserSex": "0",
+	"gameAreaId": "1",
+	"gameRoleId": "2974907601",
+	"gameServerId": "1391",
+	"gameUserSex": "1",
 	"dimGender": 1,
 	"encodeParam": "",
-	"trpc": true
+	"trpc": false
 }

@@ -153,6 +153,15 @@ public class CampDevice {
         /** 账号 openid，32 位大写十六进制；对应抓包头部 {@code openid}。建议填写该 token 对应的真实 openid */
         private String openid;
 
+        /**
+         * 游戏侧 openid，32 位大写十六进制；对应抓包头部 {@code gameopenid}。
+         *
+         * <p>与 {@code openid} <b>不是同一个值</b>：它绑定「账号 + 已选角色」，
+         * 仅在选定角色后的请求中出现（{@code /sso/isaccesstokenexpired} 等），
+         * 未选角色的 {@code /game/rolelist} 请求不携带。留空时不下发该头部。</p>
+         */
+        private String gameOpenId;
+
         /** 设备级日志追踪 id，UUID 大写；对应抓包头部 {@code x-log-uid}，同一安装周期内固定不变 */
         private String logUid;
 
@@ -189,16 +198,16 @@ public class CampDevice {
         /** 游戏 id，王者荣耀固定 20001；同时用于 {@code gameid}/{@code cgameid}/{@code ccurrentgameid} */
         private String gameId;
 
-        /** 大区 id；对应抓包头部 {@code gameareaid}。未选定角色时为 0 */
+        /** 大区 id；对应抓包头部 {@code gameareaid}。已选角色时为 1，未选角色时为 0 */
         private String gameAreaId;
 
-        /** 角色 id；对应抓包头部 {@code gameroleid}。未选定角色时为 0 */
+        /** 角色 id；对应抓包头部 {@code gameroleid}。已选角色时为实际角色 id，未选角色时为 0 */
         private String gameRoleId;
 
-        /** 服务器 id；对应抓包头部 {@code gameserverid}。未选定角色时为 0 */
+        /** 服务器 id；对应抓包头部 {@code gameserverid}。已选角色时为实际区服 id，未选角色时为 0 */
         private String gameServerId;
 
-        /** 游戏内性别；对应抓包头部 {@code gameusersex} */
+        /** 游戏内性别；对应抓包头部 {@code gameusersex}。已选角色时为角色性别，未选角色时为 0 */
         private String gameUserSex;
 
         /** 营地资料性别；对应抓包头部 {@code kohdimgender}。1=男 2=女 */
@@ -211,8 +220,13 @@ public class CampDevice {
          */
         private String encodeParam;
 
-        /** 是否携带 {@code istrpcrequest} 头部。营地 JSON 接口依赖该标记，proto 接口抓包中不存在 */
-        private boolean trpc = true;
+        /**
+         * 是否携带 {@code istrpcrequest} 头部。
+         *
+         * <p>两份真机抓包（{@code /game/rolelist}、{@code /sso/isaccesstokenexpired}）均<b>不含</b>该头部，
+         * 故默认关闭。历史版本曾恒为 true，如需兼容老网关可在 {@code device.json} 中置 true。</p>
+         */
+        private boolean trpc;
 
         /**
          * 补齐为空的字段，保证指纹自洽且每个请求取值稳定。
@@ -221,6 +235,7 @@ public class CampDevice {
          */
         public void normalize() {
             if (isBlank(openid)) openid = randomOpenId();
+            if (gameOpenId == null) gameOpenId = "";
             if (isBlank(logUid)) logUid = UUID.randomUUID().toString().toUpperCase();
             if (isBlank(cpuHardware)) cpuHardware = "mt6833";
             if (isBlank(system)) system = "android";
@@ -230,10 +245,10 @@ public class CampDevice {
             if (isBlank(clientVersionCode)) clientVersionCode = "2057979709";
             if (isBlank(channelId)) channelId = "10003391";
             if (isBlank(gameId)) gameId = "20001";
-            if (isBlank(gameAreaId)) gameAreaId = "0";
+            if (isBlank(gameAreaId)) gameAreaId = "1";
             if (isBlank(gameRoleId)) gameRoleId = "0";
             if (isBlank(gameServerId)) gameServerId = "0";
-            if (isBlank(gameUserSex)) gameUserSex = "0";
+            if (isBlank(gameUserSex)) gameUserSex = "1";
             if (encodeParam == null) encodeParam = "";
         }
 
