@@ -2,6 +2,7 @@ package io.github.gdpl2112.controller;
 
 import com.alibaba.fastjson2.JSONArray;
 import io.github.gdpl2112.config.BindConfig;
+import io.github.gdpl2112.config.CampDevice;
 import io.github.gdpl2112.funs.UserProfile;
 import io.github.gdpl2112.funs.dto.UserRoleResult;
 import lombok.extern.slf4j.Slf4j;
@@ -28,6 +29,8 @@ public class BindController {
     private static final SimpleDateFormat SF_0 = new SimpleDateFormat("yyyy-MM-dd HH:mm");
     @Autowired
     BindConfig bindConfig;
+    @Autowired
+    CampDevice campDevice;
     @Autowired
     UserProfile userProfile;
 
@@ -87,6 +90,8 @@ public class BindController {
     @RequestMapping("/reload")
     public ResponseEntity<String> reload() {
         bindConfig.reload();
+        // 同步重载设备指纹, 便于运行期调整 device.json 后免重启生效
+        campDevice.reload();
         return ResponseEntity.ok("重载成功");
     }
 }

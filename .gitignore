@@ -1,3 +1,6 @@
+.workbuddy
+.workbuddy-ai
+*.txt
 ./temp-protobuf.bin
 logs
 .idea

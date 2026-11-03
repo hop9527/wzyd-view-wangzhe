@@ -45,11 +45,12 @@ public class UidQueryController {
     public Object show(@RequestParam("name") String name) {
         byte[] bytes = CustomProtobufBuilder.buildCustomProtobufMessage(name);
 
-        RequestBody body = RequestBody.create(bytes, MediaType.parse("application/x-protobuf"));
+        // 该接口请求体为 protobuf, content-type 必须与抓包一致, 不能沿用 JSON 类型
+        RequestBody body = RequestBody.create(bytes, MediaType.parse(HttpApi.Payload.PROTO.contentType()));
 
-        Map<String, String> headers = api.getRequestHeaders();
+        Map<String, String> headers = api.getProtoHeaders();
         Request request = new Request.Builder()
-                .url("https://kohcamp.qq.com/search/getbytype")
+                .url(HttpApi.SEARCH_BY_TYPE)
                 .post(body).headers(Headers.of(headers)).build();
 
         List<Object> result = new LinkedList<>();

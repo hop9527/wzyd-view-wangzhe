@@ -1,0 +1,22 @@
+{
+	"openid": "0B557AA9D02F7159A2DBA984E0445760",
+	"logUid": "98F70B3D-6AC6-431D-B17B-84AE30E5BD18",
+	"cpuHardware": "mt6833",
+	"system": "android",
+	"systemVersionName": "12",
+	"systemVersionCode": "31",
+	"clientVersionName": "10.114.1028",
+	"clientVersionCode": "2057979709",
+	"tinkerId": "",
+	"channelId": "10003391",
+	"arm64": true,
+	"gzip": 1,
+	"gameId": "20001",
+	"gameAreaId": "0",
+	"gameRoleId": "0",
+	"gameServerId": "0",
+	"gameUserSex": "0",
+	"dimGender": 1,
+	"encodeParam": "",
+	"trpc": true
+}

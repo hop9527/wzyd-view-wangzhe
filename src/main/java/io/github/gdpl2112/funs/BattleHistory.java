@@ -60,7 +60,7 @@ public class BattleHistory {
         try {
             log.info("getBattleHistory: {}", friendId);
             response = Jsoup.connect(HttpApi.BATTLE_HISTORY)
-                    .headers(api.getRequestHeaders())
+                    .headers(api.getJsonHeaders())
                     .requestBody(String.format(DATA_FORMAT, opt, friendId))
                     .ignoreHttpErrors(true)
                     .ignoreContentType(true).method(Connection.Method.POST)
@@ -82,7 +82,7 @@ public class BattleHistory {
         Connection.Response response = null;
         try {
             response = Jsoup.connect(HttpApi.BATTLE_DETAIL)
-                    .headers(api.getRequestHeaders())
+                    .headers(api.getJsonHeaders())
                     .requestBody(String.format(BATTLE_DATA, battleType, gameSvr, relaySvr, wz_user_id, gameSeq))
                     .ignoreHttpErrors(true)
                     .ignoreContentType(true).method(Connection.Method.POST)
@@ -99,9 +99,11 @@ public class BattleHistory {
         Connection.Response response = null;
         log.info("getBattleOneHistory: {} {} {} {}", serverId, roleId, heroId, lt);
         try {
-            Map<String, String> headers = api.getRequestHeaders();
-            headers.put("serverId", serverId.toString());
-            headers.put("gameServerId", serverId.toString());
+            Map<String, String> headers = api.getJsonHeaders();
+            // 角色维度的请求需把当前大区/角色/服务器写入头部, 与真机保持一致(全小写, 避免出现重复头部)
+            headers.put("serverid", serverId.toString());
+            headers.put("gameserverid", serverId.toString());
+            headers.put("gameroleid", roleId);
             response = Jsoup.connect(HttpApi.HERO_HISTORY).ignoreHttpErrors(true).ignoreContentType(true)
                     .headers(headers)
                     .method(Connection.Method.POST)

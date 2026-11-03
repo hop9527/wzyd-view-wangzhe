@@ -43,9 +43,8 @@ public class UserProfile {
 
     public UserRoleResult getUserRole(String yd_user_id) {
         log.info("getUserRole: {}", yd_user_id);
-        Map<String, String> headers = api.getRequestHeaders();
-        headers.put("Content-Type", "application/x-www-form-urlencoded");
-        headers.put("Host", "ssl.kohsocialapp.qq.com:10001");
+        // 旧版 kohsocialapp 服务: 表单请求体, 头部按 FORM 变体构造
+        Map<String, String> headers = api.getFormHeaders();
         Connection.Response response = null;
         try {
             response = Jsoup.connect(HttpApi.ALL_ROLE_LIST_V3)
@@ -54,7 +53,7 @@ public class UserProfile {
                     .headers(headers)
                     .data("friendUserId", yd_user_id)
                     .data("token", headers.get("token"))
-                    .data("userId", headers.get("userId"))
+                    .data("userId", headers.get("userid"))
                     .method(Connection.Method.POST)
                     .execute();
             log.debug("getUserRoleResponse:{}", response.body());
@@ -89,7 +88,7 @@ public class UserProfile {
         try {
             Connection.Response response = Jsoup.connect(HttpApi.PROFILE_INDEX)
                     .ignoreHttpErrors(true).ignoreContentType(true)
-                    .headers(api.getRequestHeaders())
+                    .headers(api.getJsonHeaders())
                     .requestBody(String.format(DATA_FORMAT_INDEX, yd_user_id, role_id))
                     .method(Connection.Method.POST)
                     .execute();
@@ -108,7 +107,7 @@ public class UserProfile {
         try {
             Connection.Response response = Jsoup.connect(HttpApi.PROFILE_HERO_LIST)
                     .ignoreHttpErrors(true).ignoreContentType(true)
-                    .headers(api.getRequestHeaders())
+                    .headers(api.getJsonHeaders())
                     .requestBody(String.format(DATA_FORMAT_HERO_LIST, yd_user_id, role_id))
                     .method(Connection.Method.POST)
                     .execute();

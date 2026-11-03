@@ -40,6 +40,18 @@ DEMO-PRE (项目预览) : http://wv.kloping.top/
 
 ---
 
+## 请求字段对齐
+
+请求头字段、取值范围与真机抓包保持一致，设备指纹固化在 `data/device.json`（首次启动自动生成，可用 `GET /bind/reload` 热加载）。
+
+完整的字段映射与改造说明见 [docs/request-fields.md](docs/request-fields.md)。
+
+- 版本三元组（`cclientversionname` / `cclientversioncode` / `tinkerid`）必须成组修改；
+- `openid`、`x-log-uid` 等设备标识跨请求固定，请勿每次请求重新生成；
+- 修改 `device.json` 后建议调用 `/bind/reload` 使配置生效。
+
+---
+
 ## 免责声明
 本仓库所有代码、文档仅作个人编程学习、技术研究用途，仅针对公开网页/客户端展示的公开数据做技术演示，无任何商业用途。
 1. 王者荣耀相关游戏素材、文字、图标、商标、游戏数据知识产权均归属腾讯游戏及其关联公司所有；
